@@ -1,34 +1,41 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import bcrypt from 'bcrypt';
 import { sequelize } from '../config/database';
+import { v4 as uuidv4 } from 'uuid';
+import Address from './Address';
+import Role from './Role';
 
 // User attributes interface
 interface UserAttributes {
-  id: number;
-  name: string;
-  email: string;
+  id: string;
+  username?: string;
   password: string;
-  role: 'user' | 'admin';
-  active: boolean;
+  fullName?: string;
+  phone?: string;
+  email?: string;
+  addressId?: string;
+  roleId?: string;
   createdAt?: Date;
-  updatedAt?: Date;
+  isActive?: boolean;
 }
 
-// Interface for User creation attributes - all the fields that can be null/generated
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'role' | 'active' | 'createdAt' | 'updatedAt'> {}
+// Interface for User creation attributes
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'createdAt' | 'isActive'> {}
 
-// User model with additional instance methods
+// User model
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
-  public id!: number;
-  public name!: string;
-  public email!: string;
+  public id!: string;
+  public username?: string;
   public password!: string;
-  public role!: 'user' | 'admin';
-  public active!: boolean;
+  public fullName?: string;
+  public phone?: string;
+  public email?: string;
+  public addressId?: string;
+  public roleId?: string;
+  public isActive!: boolean;
   
   // Timestamps
   public readonly createdAt!: Date;
-  public readonly updatedAt!: Date;
   
   // Instance method để kiểm tra mật khẩu
   public async isPasswordMatch(enteredPassword: string): Promise<boolean> {
@@ -38,34 +45,23 @@ class User extends Model<UserAttributes, UserCreationAttributes> implements User
 
 User.init({
   id: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.CHAR(36),
     primaryKey: true,
-    autoIncrement: true
+    defaultValue: () => uuidv4()
   },
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false,
+  username: {
+    type: DataTypes.STRING(30),
+    allowNull: true,
+    unique: true,
     validate: {
-      notEmpty: {
-        msg: 'Tên không được để trống'
-      }
-    }
-  },
-  email: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    unique: {
-      name: 'unique_email_constraint',
-      msg: 'Email này đã được sử dụng'
-    },
-    validate: {
-      isEmail: {
-        msg: 'Email không hợp lệ'
+      len: {
+        args: [3, 30],
+        msg: 'Tên đăng nhập phải có từ 3-30 ký tự'
       }
     }
   },
   password: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(255),
     allowNull: false,
     validate: {
       len: {
@@ -74,17 +70,61 @@ User.init({
       }
     }
   },
-  role: {
-    type: DataTypes.ENUM('user', 'admin'),
-    defaultValue: 'user'
+  fullName: {
+    type: DataTypes.STRING(200),
+    allowNull: true
   },
-  active: {
+  phone: {
+    type: DataTypes.STRING(15),
+    allowNull: true,
+    validate: {
+      is: {
+        args: /^[0-9\+\-\s]*$/i,
+        msg: 'Số điện thoại không hợp lệ'
+      }
+    }
+  },
+  email: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    validate: {
+      isEmail: {
+        msg: 'Email không hợp lệ'
+      }
+    }
+  },
+  addressId: {
+    type: DataTypes.CHAR(36),
+    allowNull: true,
+    references: {
+      model: Address,
+      key: 'id'
+    },
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE'
+  },
+  roleId: {
+    type: DataTypes.CHAR(36),
+    allowNull: true,
+    references: {
+      model: Role,
+      key: 'id'
+    },
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE'
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  },
+  isActive: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   }
 }, {
   tableName: 'users',
   timestamps: true,
+  updatedAt: false,
   sequelize,
   hooks: {
     beforeCreate: async (user: User) => {
@@ -101,5 +141,12 @@ User.init({
     }
   }
 });
+
+// Set up relationships
+User.belongsTo(Address, { foreignKey: 'addressId', as: 'address' });
+User.belongsTo(Role, { foreignKey: 'roleId', as: 'role' });
+
+Address.hasMany(User, { foreignKey: 'addressId', as: 'users' });
+Role.hasMany(User, { foreignKey: 'roleId', as: 'users' });
 
 export default User;

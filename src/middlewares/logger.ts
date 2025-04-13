@@ -150,10 +150,10 @@ const developmentLogger = (tokens: any, req: Request, res: Response) => {
     .map(h => `${chalk.gray(h)}: ${chalk.white(req.headers[h] as string)}`)
     .join('\n  ');
   
-  if (reqHeaders) {
-    console.log(chalk.bold.underline('🔍 Important Headers:'));
-    console.log('  ' + reqHeaders);
-  }
+  // if (reqHeaders) {
+  //   console.log(chalk.bold.underline('🔍 Important Headers:'));
+  //   console.log('  ' + reqHeaders);
+  // }
 
   console.log('='.repeat(60));
   return null;

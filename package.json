@@ -8,9 +8,8 @@
     "dev": "nodemon --exec ts-node src/server.ts",
     "debug": "nodemon --inspect --exec ts-node src/server.ts",
     "db:sync": "ts-node src/utils/syncDatabase.ts",
-    "db:sync:force": "ts-node src/utils/syncDatabase.ts --force",
-    "db:sync:seed": "ts-node src/utils/syncDatabase.ts --seed",
-    "db:sync:force:seed": "ts-node src/utils/syncDatabase.ts --force --seed",
+    "db:sync:force": "ts-node src/utils/syncDatabase.ts --force --seed",
+    "db:sync:alter": "ts-node src/utils/syncDatabase.ts --alter",
     "build": "tsc",
     "watch": "tsc --watch"
   },
@@ -45,6 +44,7 @@
     "@types/jsonwebtoken": "^9.0.6",
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.11.30",
+    "@types/uuid": "^10.0.0",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.3"

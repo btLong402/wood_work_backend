@@ -5,11 +5,16 @@ import { ApiResponse } from '../utils/apiResponse';
 
 dotenv.config();
 
+// Define custom JWT payload type with id
+interface CustomJwtPayload extends jwt.JwtPayload {
+  id: string;
+}
+
 // Extend Express Request interface to include user property
 declare global {
   namespace Express {
     interface Request {
-      user?: jwt.JwtPayload;
+      user?: CustomJwtPayload;
     }
   }
 }
@@ -26,7 +31,14 @@ const auth = async (req: Request, res: Response, next: NextFunction): Promise<vo
     }
     
     // Xác thực token
-    const decoded = jwt.verify(accessToken, process.env.JWT_SECRET as string) as jwt.JwtPayload;
+    const decoded = jwt.verify(accessToken, process.env.JWT_SECRET as string) as CustomJwtPayload;
+    
+    // Make sure the decoded token has an id property
+    if (!decoded.id) {
+      return res.status(401).json(
+        ApiResponse.unauthorized('Token không hợp lệ. Vui lòng đăng nhập lại.')
+      );
+    }
     
     // Thêm thông tin user vào request
     req.user = decoded;
@@ -55,7 +67,7 @@ export const refreshAuth = async (req: Request, res: Response, next: NextFunctio
     const decoded = jwt.verify(
       refreshToken, 
       process.env.REFRESH_TOKEN_SECRET as string
-    ) as jwt.JwtPayload;
+    ) as CustomJwtPayload;
     
     // Tạo access token mới
     const newAccessToken = jwt.sign(

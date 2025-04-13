@@ -9,6 +9,9 @@ import { connectDB } from './config/database';
 import errorHandler from './middlewares/errorHandler';
 import { logger, accessLogger } from './middlewares/logger';
 import userRoutes from './routes/userRoutes';
+import woodSpeciesRoutes from './routes/woodSpeciesRoutes';
+import woodLotRoutes from './routes/woodLotRoutes';
+import transactionRoutes from './routes/transactionRoutes';
 import { AppError } from './utils/appError';
 
 // Khởi tạo dotenv
@@ -41,6 +44,9 @@ app.get('/', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/users', userRoutes);
+app.use('/api/wood-species', woodSpeciesRoutes);
+app.use('/api/wood-lots', woodLotRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 // Print all registered routes for debugging
 console.log('\nAll registered routes:');
@@ -53,7 +59,19 @@ app._router?.stack.forEach((middleware: any) => {
     middleware.handle?.stack?.forEach((handler: any) => {
       if (handler.route) {
         const method = Object.keys(handler.route.methods)[0].toUpperCase();
-        console.log(`${method} /api/users${handler.route.path}`);
+        let basePath = '';
+        
+        if (middleware.regexp.toString().includes('/api/users')) {
+          basePath = '/api/users';
+        } else if (middleware.regexp.toString().includes('/api/wood-species')) {
+          basePath = '/api/wood-species';
+        } else if (middleware.regexp.toString().includes('/api/wood-lots')) {
+          basePath = '/api/wood-lots';
+        } else if (middleware.regexp.toString().includes('/api/transactions')) {
+          basePath = '/api/transactions';
+        }
+        
+        console.log(`${method} ${basePath}${handler.route.path}`);
       }
     });
   }
